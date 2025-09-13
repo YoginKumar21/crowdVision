@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrowdVision AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #111827;
+            --card-bg: #1f2937;
+            --text-color: #e5e7eb;
+            --subtitle-color: #9ca3af;
+            --border-color: #374151;
+            --primary-color: #4f46e5;
+            --alert-critical: #ef4444;
+            --alert-high: #f97316;
+            --alert-medium: #3b82f6;
+            --alert-low: #10b981;
+            --status-exceeded: #fee2e2;
+            --status-ok: #d1fae5;
+            --status-exceeded-text: #b91c1c;
+            --status-ok-text: #065f46;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1200px;
+            background-color: rgba(17, 24, 39, 0.9);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+
+        .navbar .nav-links a {
+            color: var(--subtitle-color);
+            text-decoration: none;
+            margin-left: 2rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .navbar .nav-links a:hover,
+        .navbar .nav-links a.active {
+            color: var(--text-color);
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--text-color);
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 3rem;
+        }
+
+        .page-section {
+            padding: 2rem;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .home-section {
+            background-image: url('a.jpeg');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .home-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .home-section .content {
+            z-index: 10;
+        }
+
+        .cta-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #4338ca;
+        }
+
+        .card {
+            background-color: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(5px);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-box {
+            border: 2px dashed var(--border-color);
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .upload-box:hover {
+            border-color: var(--primary-color);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--subtitle-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .supported-formats {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .format-badge {
+            background-color: var(--card-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+
+        .analysis-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .analysis-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detection-results, .emergency-alerts {
+            text-align: center;
+        }
+
+        .metric-card {
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            background-color: var(--card-bg);
+            margin-bottom: 1rem;
+        }
+
+        .metric-card h4 {
+            font-size: 1.25rem;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+
+        .limit-value {
+            color: #fca5a5;
+        }
+
+        .status-alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        
+        .status-alert.exceeded {
+            background-color: var(--status-exceeded);
+            color: var(--status-exceeded-text);
+        }
+        
+        .status-alert.ok {
+            background-color: var(--status-ok);
+            color: var(--status-ok-text);
+        }
+
+        .density-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        /* New styling for density graph */
+        .density-graph {
+            height: 1.5rem;
+            background-color: var(--border-color);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .density-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.5s ease-in-out;
+        }
+
+        .density-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--subtitle-color);
+        }
+        
+        /* Max limit input field */
+        .max-limit-input {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .max-limit-input label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--subtitle-color);
+            font-weight: 500;
+        }
+        .max-limit-input input {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .emergency-alerts button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .emergency-alerts button:hover {
+            background-color: #2b3b52;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .analysis-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- Alert Pop-up Styling --- */
+        #top-alert {
+            position: fixed;
+            top: -100px; /* Start off-screen */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            transition: top 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            opacity: 0;
+        }
+        #top-alert.show {
+            top: 80px; /* Slide down */
+            opacity: 1;
+        }
+        #top-alert.management {
+            background-color: var(--primary-color);
+        }
+        #top-alert.medical {
+            background-color: var(--alert-critical);
+        }
+        #top-alert.police {
+            background-color: #3b82f6; /* A shade of blue */
+        }
+        
+        .cropper-container, #analysis-image-container {
+            display: inline-block;
+            max-width: 100%;
+            margin-top: 2rem;
+            position: relative;
+        }
+        
+        .cropper-container img {
+            display: block;
+            max-width: 100%;
+        }
+        
+        .features-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem; /* Reduced gap */
+            margin-top: 2rem;
+        }
+
+        .features-grid .card {
+            max-width: 200px; /* Reduced max-width */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">CrowdVision AI</div>
+            <div class="nav-links">
+                <a href="#home" class="active">Home</a>
+                <a href="#upload">Upload</a>
+                <a href="#analysis">Analysis</a>
+            </div>
+        </nav>
+
+        <!-- Dynamic Content Sections -->
+        <section id="home" class="page-section home-section">
+            <div class="content">
+                <h1>Intelligent Crowd Analysis</h1>
+                <p class="subtitle" style="max-width: 600px; margin: 0 auto;">Advanced AI-powered crowd monitoring system with real-time density analysis, emergency alerts, and futuristic visualization technology.</p>
+                <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem;">
+                    <a href="#upload" class="cta-button">Start Analysis</a>
+                </div>
+                <div style="margin-top: 4rem;">
+                    <h2>Advanced Features</h2>
+                    <p class="subtitle">Cutting-edge technology for comprehensive crowd monitoring and safety management</p>
+                    <div class="features-grid">
+                        <div class="card">
+                            <div class="upload-icon">📁</div>
+                            <h3 style="font-size: 1.25rem;">Smart Upload</h3>
+                            <p style="font-size: 0.9rem; color: var(--subtitle-color);">Upload images and select specific areas for focused analysis.</p>
+                        </div>
+                        <div class="card">
+                            <div class="upload-icon">🧠</div>
+                            <h3 style="font-size: 1.25rem;">AI Recognition</h3>
+                            <p style="font-size: 0.9rem; color: var(--subtitle-color);">Advanced crowd detection with real-time density mapping.</p>
+                        </div>
+                        <div class="card">
+                            <div class="upload-icon">📊</div>
+                            <h3 style="font-size: 1.25rem;">Visual Analytics</h3>
+                            <p style="font-size: 0.9rem; color: var(--subtitle-color);">Interactive heatmaps and graphs with color-coded density zones.</p>
+                        </div>
+                        <div class="card">
+                            <div class="upload-icon">🚨</div>
+                            <h3 style="font-size: 1.25rem;">Alert System</h3>
+                            <p style="font-size: 0.9rem; color: var(--subtitle-color);">Automated alerts to emergency services when limits are exceeded.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="upload" class="page-section">
+            <div class="card" style="width: 100%; max-width: 900px;">
+                <h1>Upload Image for Analysis</h1>
+                <p class="subtitle">Select an image containing crowds for intelligent density analysis</p>
+                <div class="card upload-box" id="upload-box-click">
+                    <div class="upload-icon">⬆️</div>
+                    <p class="subtitle">Drop your image here<br>or click to browse files</p>
+                    <input type="file" id="image-upload" style="display: none;" accept="image/*">
+                    <button class="cta-button">Select Image</button>
+                </div>
+                <div class="supported-formats">
+                    <div class="format-badge">JPG</div>
+                    <div class="format-badge">PNG</div>
+                    <div class="format-badge">WEBP</div>
+                </div>
+                <div class="max-limit-input">
+                    <label for="max-limit-value">Set Maximum Limit:</label>
+                    <input type="number" id="max-limit-value" value="100" min="1">
+                </div>
+                <div id="loading-spinner" style="display: none; margin-top: 2rem; color: var(--subtitle-color);">Processing...</div>
+                <div id="error-message" style="display: none; margin-top: 1rem; color: var(--alert-critical);"></div>
+            </div>
+        </section>
+
+        <section id="analysis" class="page-section" style="display: none;">
+            <h1>Crowd Analysis Dashboard</h1>
+            <p class="subtitle">Analyze full image or select a region of interest</p>
+            <div class="analysis-layout" style="width: 100%;">
+                <div class="analysis-box" style="display: flex; flex-direction: column;">
+                    <h4 style="margin-bottom: 1rem;">Original Image with ROI Selector</h4>
+                    <div class="card">
+                        <img id="original-image" src="" alt="Original Image" style="width: 100%; display: none;">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button id="full-image-button" class="cta-button" style="display: none; flex: 1;">Analyze Full Image</button>
+                        <button id="analyze-button" class="cta-button" style="display: none; flex: 1;">Analyze Cropped Region</button>
+                    </div>
+
+                    <h4 style="margin-top: 2rem;">Full Image Analysis</h4>
+                    <div id="full-image-results" class="analysis-results card" style="display: none;">
+                        <img id="full-processed-image" src="" alt="Full Image Processed" style="width: 100%; border-radius: 0.5rem;">
+                        <div class="analysis-metrics" style="display: flex; justify-content: space-around; margin-top: 1rem;">
+                            <div class="metric-card" style="background: transparent; box-shadow: none;">
+                                <h4>People Detected</h4>
+                                <div id="full-people-count" class="metric-value">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem;">Region of Interest Analysis</h4>
+                    <div id="roi-image-results" class="analysis-results card" style="display: none;">
+                        <img id="roi-processed-image" src="" alt="ROI Processed" style="width: 100%; border-radius: 0.5rem;">
+                        <div class="analysis-metrics" style="display: flex; justify-content: space-around; margin-top: 1rem;">
+                            <div class="metric-card" style="background: transparent; box-shadow: none;">
+                                <h4>People in ROI</h4>
+                                <div id="roi-people-count" class="metric-value">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-box">
+                    <h4 class="detection-results">Dashboard Metrics</h4>
+                    <div class="card metric-card">
+                        <h4>Overall People Count</h4>
+                        <div id="people-count" class="metric-value">0</div>
+                    </div>
+                    <div class="card metric-card">
+                        <h4>Maximum Limit</h4>
+                        <div id="metric-limit-value" class="metric-value limit-value">100</div>
+                    </div>
+                    <div id="status-alert"></div>
+
+                    <h4 style="margin-top: 2rem;">Emergency Alerts</h4>
+                    <div class="emergency-alerts">
+                        <button onclick="showAlert('Alert sent to management!', 'management')">Alert Management</button>
+                        <button onclick="showAlert('Alert sent to medical services!', 'medical')">Alert Medical</button>
+                        <button onclick="showAlert('Alert sent to police!', 'police')">Alert Police</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Custom Top Alert Pop-up -->
+    <div id="top-alert"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/detect';
+        let maxLimit = 100;
+        let alertTimeout;
+        let cropper;
+        let originalImageFile;
+        const uploadBox = document.getElementById('upload-box-click');
+        const fileInput = document.getElementById('image-upload');
+
+        function showLoading(message) {
+            const spinner = document.getElementById('loading-spinner');
+            spinner.textContent = message;
+            spinner.style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-spinner').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        function resetAnalysis() {
+            document.getElementById('full-image-results').style.display = 'none';
+            document.getElementById('roi-image-results').style.display = 'none';
+            document.getElementById('full-image-button').style.display = 'none';
+            document.getElementById('analyze-button').style.display = 'none';
+            document.getElementById('people-count').textContent = '0';
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            resetAnalysis();
+            originalImageFile = file;
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const originalImage = document.getElementById('original-image');
+                originalImage.src = e.target.result;
+                originalImage.style.display = 'block';
+                
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(originalImage, {
+                    viewMode: 1,
+                    movable: true,
+                    zoomable: true
+                });
+
+                document.getElementById('full-image-button').style.display = 'block';
+                document.getElementById('analyze-button').style.display = 'block';
+                document.getElementById('analysis').style.display = 'flex';
+                document.location.hash = '#analysis';
+            };
+            reader.readAsDataURL(file);
+
+            hideError();
+            maxLimit = parseInt(document.getElementById('max-limit-value').value, 10) || 100;
+            document.getElementById('metric-limit-value').textContent = maxLimit;
+            document.getElementById('display-max-limit').textContent = `Max Limit: ${maxLimit}`;
+            
+            // Initial analysis on the full image
+            showLoading('Analyzing full image...');
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('heatmap', 'true');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                updateFullImageAnalysis(result, maxLimit);
+            } catch (error) {
+                console.error('API call failed:', error);
+                showError('Failed to connect to the backend. Is the Flask server running?');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function analyzeCroppedRegion() {
+            if (!cropper) return;
+            
+            showLoading('Analyzing cropped region...');
+            hideError();
+
+            const croppedCanvas = cropper.getCroppedCanvas();
+            croppedCanvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'cropped_image.png');
+                formData.append('heatmap', 'true');
+                
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    updateRoiAnalysis(result);
+                } catch (error) {
+                    console.error('API call failed:', error);
+                    showError('Failed to connect to the backend. Is the Flask server running?');
+                } finally {
+                    hideLoading();
+                }
+            }, 'image/png');
+        }
+
+        async function analyzeFullImage() {
+            if (!originalImageFile) return;
+
+            showLoading('Analyzing full image...');
+            hideError();
+            
+            const formData = new FormData();
+            formData.append('file', originalImageFile);
+            formData.append('heatmap', 'true');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const result = await response.json();
+                updateFullImageAnalysis(result, maxLimit);
+            } catch (error) {
+                console.error('API call failed:', error);
+                showError('Failed to connect to the backend. Is the Flask server running?');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateFullImageAnalysis(results, maxLimit) {
+            const peopleCountEl = document.getElementById('people-count');
+            const fullPeopleCountEl = document.getElementById('full-people-count');
+            const processedImageEl = document.getElementById('full-processed-image');
+            const densityBarEl = document.getElementById('density-bar');
+            const densityPercentageEl = document.getElementById('density-percentage');
+            const statusAlertEl = document.getElementById('status-alert');
+
+            peopleCountEl.textContent = results.count;
+            fullPeopleCountEl.textContent = results.count;
+            processedImageEl.src = `data:image/png;base64,${results.image}`;
+            
+            document.getElementById('full-image-results').style.display = 'block';
+
+            const densityPercentage = Math.min(100, (results.count / maxLimit) * 100);
+            densityBarEl.style.width = `${densityPercentage}%`;
+            densityPercentageEl.textContent = `Density: ${densityPercentage.toFixed(0)}%`;
+
+            const exceededLimit = results.count > maxLimit;
+            if (exceededLimit) {
+                statusAlertEl.innerHTML = `<div class="status-alert exceeded">🚨 Limit Exceeded! Current count exceeds the set limit by ${results.count - maxLimit} people.</div>`;
+            } else {
+                statusAlertEl.innerHTML = `<div class="status-alert ok">✅ Within Limit</div>`;
+            }
+        }
+        
+        function updateRoiAnalysis(results) {
+            const roiPeopleCountEl = document.getElementById('roi-people-count');
+            const roiProcessedImageEl = document.getElementById('roi-processed-image');
+
+            roiPeopleCountEl.textContent = results.count;
+            roiProcessedImageEl.src = `data:image/png;base64,${results.image}`;
+            
+            document.getElementById('roi-image-results').style.display = 'block';
+        }
+
+        function showAlert(message, type) {
+            const alertEl = document.getElementById('top-alert');
+            
+            clearTimeout(alertTimeout);
+            
+            alertEl.textContent = message;
+            alertEl.className = 'top-alert show ' + type;
+            
+            alertTimeout = setTimeout(() => {
+                alertEl.classList.remove('show');
+            }, 4500);
+        }
+
+        function navigate(page) {
+            document.location.hash = `#${page}`;
+        }
+        
+        window.addEventListener('hashchange', () => {
+            const page = window.location.hash.slice(1) || 'home';
+            const navLinks = document.querySelectorAll('.nav-links a');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${page}`) {
+                    link.classList.add('active');
+                }
+            });
+
+            document.querySelectorAll('section.page-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            const targetSection = document.getElementById(page);
+            if (targetSection) {
+                targetSection.style.display = 'flex';
+            }
+        });
+
+        window.addEventListener('load', () => {
+            const initialPage = window.location.hash.slice(1) || 'home';
+            const navLinks = document.querySelectorAll('.nav-links a');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === `#${initialPage}`) {
+                    link.classList.add('active');
+                }
+            });
+            document.querySelectorAll('section.page-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            const targetSection = document.getElementById(initialPage);
+            if (targetSection) {
+                targetSection.style.display = 'flex';
+            }
+        });
+
+        document.getElementById('image-upload').addEventListener('change', handleFileUpload);
+        document.getElementById('analyze-button').addEventListener('click', analyzeCroppedRegion);
+        document.getElementById('full-image-button').addEventListener('click', analyzeFullImage);
+
+        // Make the custom upload box clickable
+        uploadBox.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+    </script>
+</body>
+</html>
